@@ -65,9 +65,31 @@ class CarState(CarStateBase):
     self.dp_zss_compute = False
     self.dp_zss_cruise_active_last = False
     self.dp_zss_angle_offset = 0.
+    
+    #Carioca Pilot Animal Pilot
+    self.mads_enabled = None
+    self.prev_mads_enabled = None
+    self.lkas_enabled = None
+    self.prev_lkas_enabled = None
 
+    #FIM CariocaPilot
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
+
+#CariocaPilot Animal Pilot
+ # update prevs, update must run once per loop
+    self.prev_cruise_buttons = self.cruise_buttons
+    self.prev_mads_enabled = self.mads_enabled
+    self.prev_lkas_enabled = self.lkas_enabled
+#FIM CariocaPilot
+
+    self.acc_mads_combo = self.params.get_bool("AccMadsCombo")
+    self.visual_brake_lights = self.params.get_bool("BrakeLights")
+    self.gap_adjust_cruise = Params().get_bool("GapAdjustCruise")
+    self.gap_adjust_cruise_mode = int(Params().get("GapAdjustCruiseMode"))
+    self._reverse_acc_change = self.params.get_bool("ReverseAccChange")
+
+#End CariocaPilot
 
     ret.doorOpen = any([cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_FL"], cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_FR"],
                         cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_RL"], cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_RR"]])
@@ -225,6 +247,22 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in (TSS2_CAR | RADAR_ACC_CAR):
       self.acc_type = cp_acc.vl["ACC_CONTROL"]["ACC_TYPE"]
       ret.stockFcw = bool(cp_acc.vl["ACC_HUD"]["FCW"])
+
+#CariocaPilot / AnimalPilot
+    if self.mads_enabled = ret.cruiseState.available
+
+    if self.prev_mads_enabled is None:
+      self.prev_mads_enabled = self.mads_enabled
+
+    if self.CP.carFingerprint in RADAR_ACC_CAR:
+      self.acc_type = cp.vl["ACC_CONTROL"]["ACC_TYPE"]
+      ret.stockFcw = bool(cp.vl["ACC_HUD"]["FCW"])
+
+    elif self.CP.carFingerprint in TSS2_CAR:
+      self.acc_type = 1 if Params().get_bool('StopAndGoHack') else cp_cam.vl["ACC_CONTROL"]["ACC_TYPE"]
+      ret.stockFcw = bool(cp_cam.vl["ACC_HUD"]["FCW"])
+
+#FIM CariocaPilot / AnimalPilot
 
     # some TSS2 cars have low speed lockout permanently set, so ignore on those cars
     # these cars are identified by an ACC_TYPE value of 2.
